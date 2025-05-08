@@ -98,7 +98,7 @@ static inline void gemm_kernel_4x4_scalar(
 static void gemm_scalar_boundary(
     int m_start, int m_end, 
     int n_start, int n_end,
-    int k, double* A, double* B, double* C, int n
+    int k, const double* A, const double* B, double* C, int n
 ) {
     for (int i = m_start; i < m_end; ++i) {
         for (int p = 0; p < k; ++p) {
@@ -117,7 +117,7 @@ static void gemm_scalar_boundary(
 // 参数:
 //   m, n, k: 原始大矩阵的维度
 //   A, B, C: 指向原始大矩阵的指针
-void gemm_microkernel_avx2_wrapper(int m, int n, int k, double* A, double* B, double* C) {
+void gemm_microkernel_avx2_wrapper(int m, int n, int k, const double* A, const double* B, double* C) {
     // 外层循环按微内核的块大小步进，遍历 C 矩阵
     // 处理内部完整块（可以被4整除的部分）
     int m_boundary = (m / MR_AVX2) * MR_AVX2;

@@ -6,14 +6,14 @@
 // 优化点:
 //   - A(i,p) 在内层 j 循环中是不变的，可以预先加载。
 //   - B(p,j) 在内层 j 循环中是按行连续访问的，空间局部性好。
-void gemm_opt_ikj(int m, int n, int k, double* A, double* B, double* C) {
+void gemm_opt_ikj(int m, int n, int k, const double* A, const double* B, double* C) {
     // 外层循环: 遍历结果矩阵 C 的每一行
     for (int i = 0; i < m; ++i) {
         // 中层循环: 遍历公共维度 k (对应 A 的列，B 的行)
         for (int p = 0; p < k; ++p) {
             // 预先加载 A(i,p) 的值，因为它在接下来的内层 j 循环中不会改变。
             // 现代编译器通常能很好地将这个值优化到寄存器中。
-            double val_A_ip = A_idx(A, i, p, k); // 变量名用英文
+            double val_A_ip = A_idx(A, i, p, k); 
 
             // 内层循环: 遍历结果矩阵 C 的每一列
             for (int j = 0; j < n; ++j) {

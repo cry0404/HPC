@@ -26,6 +26,16 @@
 // C(i,j) 其中 C 是 m_glob x n_glob, n_glob 是 C 的列数
 #define C_idx(ptr, r, c, n_glob) ((ptr)[(r) * (n_glob) + (c)])
 
+// --- 微内核相关定义 (如果它们是固定的，且被多个文件使用) ---
+#define MR_AVX2 4      // 微内核处理的行数 (对应A的行panel高度)
+#define NR_AVX2 4      // 微内核处理的列数 (对应B的行panel宽度)
+
+// --- 矩阵工具函数声明 (定义在 matrix_utils.c) ---
+double* allocate_matrix(int rows, int cols);
+void free_matrix(double* mat);
+void fill_random_matrix(double* mat, int rows, int cols);
+void zero_matrix(double* mat, int rows, int cols);
+double verify_result(const double* C_ref, const double* C_test, int m, int n, int* diff_r, int* diff_c);
 
 // --- GEMM 函数声明 ---
 // m, n, k 分别是矩阵 C(m,n), A(m,k), B(k,n) 的维度
@@ -52,9 +62,27 @@ void gemm_opt_ikj(int m, int n, int k, const double* A, const double* B, double*
 void gemm_blocking(int m, int n, int k, const double* A, const double* B, double* C, int block_size);
 
 /**
- * @brief 使用 4x4 微内核的 AVX2 优化封装函数 (当前为标量模拟)。 (来自 gemm_microkernel.c)
+ * @brief 使用 4x4 微内核的 AVX2 优化封装函数 (真实SIMD)。 (来自 gemm_microkernel.c)
  * C = A * B (假设 C 初始为0)
  */
 void gemm_microkernel_avx2_wrapper(int m, int n, int k, const double* A, const double* B, double* C);
+
+/**
+ * @brief 使用 Packing 和 4x4 AVX2 微内核的优化GEMM。 (来自 gemm_packing.c)
+ * C = A * B (假设 C 初始为0)
+ */
+void gemm_packed_avx2(int m, int n, int k, const double* A, const double* B, double* C);
+
+// 声明来自 gemm_microkernel.c 的核心内核函数，以便 gemm_packing.c 可以调用它们
+// (它们不再是 static inline in gemm_microkernel.c)
+void gemm_kernel_4x4_avx2(
+    int k_common, const double* ptr_A_row_start, int lda,
+    const double* ptr_B_col_start, int ldb,
+    double* ptr_C_target, int ldc);
+
+void gemm_kernel_4x4_scalar(
+    int k_inner, const double* ptr_A_panel, int k_cols_A,
+    const double* ptr_B_panel, int n_cols_B,
+    double* ptr_C_target, int n_cols_C);
 
 #endif // COMMON_H
